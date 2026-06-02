@@ -1,0 +1,5 @@
+[2026-06-03 05:58:08,033] USER: admin@company.com | ACTION: ADMIN_BULK_RESOLVE | TICKET_ID: 38 | DETAIL: Ticket marked as resolved via admin bulk action.
+[2026-06-03 05:58:08,069] USER: admin@company.com | ACTION: ADMIN_BULK_RESOLVE | TICKET_ID: 37 | DETAIL: Ticket marked as resolved via admin bulk action.
+[2026-06-03 05:58:08,097] USER: admin@company.com | ACTION: ADMIN_BULK_RESOLVE | TICKET_ID: 36 | DETAIL: Ticket marked as resolved via admin bulk action.
+[2026-06-03 05:58:08,119] USER: admin@company.com | ACTION: ADMIN_BULK_RESOLVE | TICKET_ID: 35 | DETAIL: Ticket marked as resolved via admin bulk action.
+[2026-06-03 05:58:08,140] USER: admin@company.com | ACTION: ADMIN_BULK_RESOLVE | TICKET_ID: 34 | DETAIL: Ticket marked as resolved via admin bulk action.

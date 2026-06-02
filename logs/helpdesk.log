@@ -189,3 +189,32 @@
 [2026-06-02 22:18:45,726] INFO - User logout: manager@company.com
 [2026-06-02 22:18:51,829] INFO - User login: dev@company.com
 [2026-06-02 22:18:51,830] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 23:08:39,714] INFO - User logout: admin@company.com
+[2026-06-02 23:09:29,870] INFO - User login: dev@company.com
+[2026-06-02 23:09:29,871] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 23:10:52,865] INFO - Ticket created: Ticket #37 by dev@company.com
+[2026-06-02 23:45:34,102] INFO - Ticket edited: Ticket #36 edited by dev@company.com
+[2026-06-02 23:46:58,593] INFO - Ticket created: Ticket #38 by dev@company.com
+[2026-06-02 23:59:29,379] INFO - User logout: admin@company.com
+[2026-06-03 00:00:33,207] INFO - User login: dev@company.com
+[2026-06-03 00:00:33,212] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-03 00:03:29,315] INFO - Ticket created: Ticket #39 by dev@company.com
+[2026-06-03 05:00:36,348] INFO - User logout: manager@company.com
+[2026-06-03 05:00:47,926] INFO - User login: dev@company.com
+[2026-06-03 05:00:47,927] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-03 05:22:58,145] INFO - User logout: dev@company.com
+[2026-06-03 05:23:07,019] INFO - User login: dev@company.com
+[2026-06-03 05:23:07,020] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-03 05:23:08,889] INFO - User login: dev@company.com
+[2026-06-03 05:23:08,891] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-03 05:38:41,680] INFO - Status changed: Ticket #39 status changed from Open to Closed by admin@company.com
+[2026-06-03 05:38:41,684] INFO - Ticket closed: Ticket #39 closed by admin@company.com
+[2026-06-03 05:38:41,687] INFO - Notification sent: Notify dev@company.com of status update (Closed) on Ticket #39
+[2026-06-03 05:38:52,473] INFO - Notification sent: Notify dev@company.com of note added to Ticket #39
+[2026-06-03 05:39:27,378] INFO - Status changed: Ticket #38 status changed from Open to Investigating by admin@company.com
+[2026-06-03 05:39:27,384] INFO - Notification sent: Notify dev@company.com of status update (Investigating) on Ticket #38
+[2026-06-03 05:39:31,992] INFO - Notification sent: Notify dev@company.com of note added to Ticket #38
+[2026-06-03 05:40:40,450] INFO - User logout: admin@company.com
+[2026-06-03 05:40:46,632] INFO - User login: dev@company.com
+[2026-06-03 05:40:46,632] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-03 05:50:56,365] INFO - Profile updated for dev@company.com: Profile updated: Full name changed from 'Charlie Brown1' to 'Charlie Brown123'

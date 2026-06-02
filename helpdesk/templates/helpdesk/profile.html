@@ -8,18 +8,18 @@
     /* ── Profile Avatar Container & Camera Button ── */
     .profile-avatar-container {
         position: relative;
-        width: 120px;
-        height: 120px;
+        width: 130px;
+        height: 130px;
     }
     .avatar-wrapper {
         width: 100%;
         height: 100%;
         border-radius: 50%;
         overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
         border: 4px solid #ffffff;
         background-color: #f8fafc;
-        transition: transform 0.2s ease;
+        transition: transform 0.22s ease;
         cursor: pointer;
     }
     body.dark-mode .avatar-wrapper {
@@ -27,18 +27,18 @@
         background-color: #0f172a;
     }
     .avatar-wrapper:hover {
-        transform: scale(1.03);
+        transform: scale(1.04);
     }
     .camera-overlay-btn {
         position: absolute;
         bottom: 0;
         right: 0;
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
         border-radius: 50%;
         background-color: #ffffff;
         border: 1px solid #cbd5e1;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);
         color: #475569;
         display: flex;
         align-items: center;
@@ -63,7 +63,50 @@
         color: #f8fafc;
     }
 
-    /* ── Desktop Divider for Unified Card ── */
+    /* ── Profile Page Layout ── */
+    .profile-card-main {
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    .profile-summary {
+        min-height: 100%;
+        background: #f8fafc;
+        border-radius: 20px;
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .profile-info-panel {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 32px;
+        min-height: 100%;
+    }
+    .profile-summary .badge {
+        min-width: 82px;
+        font-size: 0.72rem;
+    }
+    .profile-summary-title {
+        font-size: 1.5rem;
+    }
+    .profile-summary-subtitle {
+        font-size: 0.95rem;
+    }
+    .profile-actions .btn {
+        min-height: 48px;
+    }
+    .profile-info-panel .form-label {
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+    }
+    .profile-info-panel .profile-meta-label {
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+    }
+    .profile-info-panel .profile-meta-value {
+        font-size: 0.9rem;
+    }
     @media (min-width: 992px) {
         .profile-divider {
             border-right: 1px solid #e2e8f0;
@@ -78,138 +121,122 @@
 {% block page_title %}My Profile{% endblock %}
 
 {% block content %}
-<div class="py-2">
+<div class="py-4">
 
-    <!-- Top Row: Unified Card containing Profile Summary & Personal Information -->
     <div class="row g-4 mb-4">
-        <div class="col-12">
-            <!-- Combined Card -->
-            <div class="card shadow-sm border-0" style="padding: 28px; border-radius: 12px;">
-                <div class="row g-4">
-                    
-                    <!-- Left Section: Profile Overview -->
-                    <div class="col-lg-4 profile-divider pe-lg-4 d-flex flex-column justify-content-between">
-                        <div>
-                            <!-- Avatar & details vertically stacked -->
-                            <div class="d-flex flex-column align-items-center align-items-lg-start mb-3">
-                                
-                                <!-- Circular Avatar with Camera Overlay -->
-                                <div class="profile-avatar-container mb-3">
-                                    <div class="avatar-wrapper" onclick="document.getElementById('avatar-input').click();" title="Change profile picture">
-                                        {% if request.user.profile_picture %}
-                                            <img id="avatar-preview" src="{{ request.user.profile_picture.url }}" style="width: 100%; height: 100%; object-fit: cover;" alt="Avatar">
-                                        {% else %}
-                                            <div id="avatar-initials-view" class="w-100 h-100 d-flex align-items-center justify-content-center text-white" style="font-size: 2.8rem; font-weight: 800; background: linear-gradient(135deg, #0A3D91 0%, #1e5bb8 100%);">
-                                                {{ request.user.full_name|default:request.user.username|slice:":1"|upper }}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <button type="button" class="camera-overlay-btn" onclick="document.getElementById('avatar-input').click();" title="Change profile picture">
-                                        <i class="fa-solid fa-camera"></i>
-                                    </button>
+        <!-- Left Column: Avatar & Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100" style="border-radius: 20px;">
+                <div class="card-body d-flex flex-column justify-content-between p-4 bg-light" style="border-radius: 20px;">
+                    <div>
+                        <div class="text-center mb-4">
+                            <div class="profile-avatar-container mx-auto mb-3">
+                                <div class="avatar-wrapper" onclick="document.getElementById('avatar-input').click();" title="Change profile picture">
+                                    {% if request.user.profile_picture %}
+                                        <img id="avatar-preview" src="{{ request.user.profile_picture.url }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                    {% else %}
+                                        <div id="avatar-initials-view" class="w-100 h-100 d-flex align-items-center justify-content-center text-white" style="font-size: 2.8rem; font-weight: 800; background: linear-gradient(135deg, #0A3D91 0%, #1e5bb8 100%);">
+                                            {{ request.user.full_name|default:request.user.username|slice:":1"|upper }}
+                                        </div>
+                                    {% endif %}
                                 </div>
+                                <button type="button" class="camera-overlay-btn" onclick="document.getElementById('avatar-input').click();" title="Change profile picture">
+                                    <i class="fa-solid fa-camera"></i>
+                                </button>
+                            </div>
 
-                                <!-- Hidden Avatar File Input Form -->
-                                <form id="avatar-form" method="POST" action="{% url 'profile' %}" enctype="multipart/form-data" class="d-none">
+                            <form id="avatar-form" method="POST" action="{% url 'profile' %}" enctype="multipart/form-data" class="d-none">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_avatar">
+                                <input type="file" id="avatar-input" name="profile_picture" accept="image/*" onchange="submitAvatarForm();">
+                            </form>
+
+                            <h4 class="fw-bold mb-1 profile-summary-title">{{ request.user.full_name|default:request.user.username }}</h4>
+                            <p class="text-muted mb-3 profile-summary-subtitle">{{ request.user.email }}</p>
+                            <div class="d-flex flex-wrap gap-2 justify-content-center">
+                                <span class="badge bg-secondary-subtle text-secondary text-uppercase fw-semibold">{{ request.user.role }}</span>
+                                <span class="badge bg-white text-muted border">{{ request.user.department }}</span>
+                            </div>
+                        </div>
+
+                        <div class="profile-actions d-grid gap-2">
+                            <button type="button" class="btn btn-outline-primary fw-semibold" onclick="document.getElementById('full_name').focus(); document.getElementById('full_name').select();">
+                                <i class="fa-solid fa-pen-to-square me-2"></i> Edit profile
+                            </button>
+                            {% if request.user.profile_picture %}
+                                <form method="POST" action="{% url 'profile' %}" class="mb-0">
                                     {% csrf_token %}
-                                    <input type="hidden" name="action" value="update_avatar">
-                                    <input type="file" id="avatar-input" name="profile_picture" accept="image/*" onchange="submitAvatarForm();">
+                                    <input type="hidden" name="action" value="remove_avatar">
+                                    <button type="submit" class="btn btn-outline-danger fw-semibold w-100">
+                                        <i class="fa-solid fa-trash-can me-2"></i> Remove photo
+                                    </button>
                                 </form>
-
-                                <!-- Details Section -->
-                                <h4 class="fw-bold mb-1 text-dark text-center text-lg-start" style="font-size: 1.4rem;">{{ request.user.full_name|default:request.user.username }}</h4>
-                                <p class="text-muted mb-3 small text-center text-lg-start" style="word-break: break-all;">{{ request.user.email }}</p>
-                                
-                                <div class="d-flex align-items-center gap-2 mb-0 flex-wrap justify-content-center justify-content-lg-start">
-                                    <span class="badge bg-secondary-subtle text-secondary text-uppercase fw-bold" style="font-size: 0.65rem;">
-                                        {{ request.user.role }}
-                                    </span>
-                                    <span class="badge bg-light text-muted border" style="font-size: 0.65rem;">
-                                        {{ request.user.department }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Actions & Last Login Footer -->
-                        <div class="mt-4">
-                            <div class="d-flex align-items-center gap-2 pt-2 mb-3">
-                                <button type="button" class="btn btn-success text-white fw-bold px-3 py-2 flex-grow-1" onclick="document.getElementById('full_name').focus(); document.getElementById('full_name').select();" style="border-radius: 8px; background-color: #10b981; border-color: #10b981; font-size: 0.85rem;">
-                                    Edit Profile
-                                </button>
-                                
-                                {% if request.user.profile_picture %}
-                                    <form method="POST" action="{% url 'profile' %}" class="mb-0 flex-grow-1">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="remove_avatar">
-                                        <button type="submit" class="btn btn-danger text-white fw-bold px-3 py-2 w-100" style="border-radius: 8px; background-color: #ef4444; border-color: #ef4444; font-size: 0.85rem;">
-                                            <i class="fa-solid fa-trash-can me-1"></i>Remove
-                                        </button>
-                                    </form>
-                                {% endif %}
-                            </div>
-                            <div class="pt-3 border-top d-flex justify-content-between align-items-center">
-                                <small class="text-muted" style="font-size: 0.72rem;">Last Login: {{ request.user.last_login|date:"M d, Y H:i"|default:"First login session" }}</small>
-                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
-                    <!-- Right Section: Personal Information Form -->
-                    <div class="col-lg-8 ps-lg-4">
-                        <h5 class="fw-bold text-navy mb-4" style="color: #0A3D91;"><i class="fa-solid fa-circle-user me-2"></i>Personal Information</h5>
-                        
-                        <form id="profile-info-form" method="POST" action="{% url 'profile' %}" class="mb-0 d-flex flex-column justify-content-between h-100">
-                            {% csrf_token %}
-                            <input type="hidden" name="action" value="update_profile">
-                            
-                            <div>
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-6">
-                                        <label for="full_name" class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.7rem;">Full Name</label>
-                                        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ request.user.full_name }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="email" class="form-label small fw-bold text-secondary text-uppercase" style="font-size: 0.7rem;">Work Email</label>
-                                        <input type="email" id="email" name="email" class="form-control" value="{{ request.user.email }}" required>
-                                    </div>
-                                </div>
-
-                                <!-- Clean Read-only Metadata Grid -->
-                                <div class="row g-3 mb-4 pt-3 border-top">
-                                    <div class="col-md-6">
-                                        <span class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Username</span>
-                                        <span class="fw-semibold text-dark d-block" style="font-size: 0.88rem;">{{ request.user.username }}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Role Type</span>
-                                        <span class="fw-semibold text-dark text-capitalize d-block" style="font-size: 0.88rem;">{{ request.user.get_role_display }}</span>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Department</span>
-                                        <span class="fw-semibold text-dark d-block" style="font-size: 0.88rem;">{{ request.user.department }}</span>
-                                        <input type="hidden" name="department" value="{{ request.user.department }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <span class="form-label small fw-bold text-secondary text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">Date Joined</span>
-                                        <span class="fw-semibold text-dark d-block" style="font-size: 0.88rem;">{{ request.user.date_joined|date:"Y-m-d" }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="text-end pt-3 border-top">
-                                <button type="submit" id="btnSaveProfile" class="btn-primary-custom px-4" style="border-radius: 8px;">
-                                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
-                                </button>
-                            </div>
-                        </form>
+                    <div class="mt-4 pt-4 border-top text-center">
+                        <small class="text-muted">Last Login: {{ request.user.last_login|date:"M d, Y H:i"|default:"First login session" }}</small>
                     </div>
-                    
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Details Form -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 h-100" style="border-radius: 20px;">
+                <div class="card-body p-4 d-flex flex-column h-100">
+                    <div class="mb-4">
+                        <h5 class="fw-bold text-navy mb-1"><i class="fa-solid fa-circle-user me-2"></i>Personal Information</h5>
+                        <p class="text-muted mb-0">Update your profile details and save changes.</p>
+                    </div>
+
+                    <form id="profile-info-form" method="POST" action="{% url 'profile' %}" class="d-flex flex-column flex-grow-1">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_profile">
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="full_name" class="form-label fw-semibold text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Full Name</label>
+                                <input type="text" id="full_name" name="full_name" class="form-control bg-light border-0 py-2 px-3" value="{{ request.user.full_name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold text-secondary text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.05em;">Work Email</label>
+                                <input type="email" id="email" name="email" class="form-control bg-light border-0 py-2 px-3" value="{{ request.user.email }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4 pt-4 border-top">
+                            <div class="col-md-6">
+                                <span class="text-secondary text-uppercase d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em;">Username</span>
+                                <span class="fw-semibold text-dark d-block" style="font-size: 0.95rem;">{{ request.user.username }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-secondary text-uppercase d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em;">Role Type</span>
+                                <span class="fw-semibold text-dark text-capitalize d-block" style="font-size: 0.95rem;">{{ request.user.get_role_display }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-secondary text-uppercase d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em;">Department</span>
+                                <span class="fw-semibold text-dark d-block" style="font-size: 0.95rem;">{{ request.user.department }}</span>
+                                <input type="hidden" name="department" value="{{ request.user.department }}">
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-secondary text-uppercase d-block mb-1" style="font-size: 0.75rem; letter-spacing: 0.05em;">Date Joined</span>
+                                <span class="fw-semibold text-dark d-block" style="font-size: 0.95rem;">{{ request.user.date_joined|date:"Y-m-d" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-4 border-top text-end">
+                            <button type="submit" id="btnSaveProfile" class="btn btn-primary px-4 py-2 rounded-3 shadow-sm fw-semibold">
+                                <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bottom Row: Recent Activity Log stretched full width -->
     <div class="row g-4">
         <div class="col-12">
             <div class="card shadow-sm border-0" style="padding: 24px; border-radius: 12px;">
@@ -235,7 +262,6 @@
                     {% endfor %}
                 </div>
 
-                <!-- Pagination controls -->
                 {% if page_obj.has_other_pages %}
                     <nav aria-label="Activity pagination" class="mt-4">
                         <ul class="pagination justify-content-center mb-0 gap-2">
@@ -293,8 +319,8 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         const profileForm = document.getElementById('profile-info-form');
-        
-        // Profile saving status triggers
+        if (!profileForm) return;
+
         profileForm.addEventListener('submit', function () {
             const saveBtn = document.getElementById('btnSaveProfile');
             if (saveBtn) {

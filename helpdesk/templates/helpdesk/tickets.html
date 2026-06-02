@@ -91,17 +91,37 @@
         <div class="d-flex justify-content-center mt-4">
             <nav aria-label="Support tickets pagination">
                 <ul class="pagination pagination-sm">
-                    <li class="page-item {% if not tickets.has_previous %}disabled{% endif %}">
-                        <a class="page-link" href="{% if tickets.has_previous %}?page={{ tickets.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}{% else %}#{% endif %}">&laquo;</a>
+                    {% if tickets.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ tickets.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo; Previous</span>
+                        </a>
                     </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link border-0 text-muted bg-transparent" aria-hidden="true">&laquo; Previous</span>
+                    </li>
+                    {% endif %}
                     {% for num in tickets.paginator.page_range %}
                     <li class="page-item {% if tickets.number == num %}active{% endif %}">
+                        {% if tickets.number == num %}
+                        <span class="page-link">{{ num }}</span>
+                        {% else %}
                         <a class="page-link" href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}">{{ num }}</a>
+                        {% endif %}
                     </li>
                     {% endfor %}
-                    <li class="page-item {% if not tickets.has_next %}disabled{% endif %}">
-                        <a class="page-link" href="{% if tickets.has_next %}?page={{ tickets.next_page_number }}&search={{ search_query }}&status={{ status_filter }}{% else %}#{% endif %}">&raquo;</a>
+                    {% if tickets.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ tickets.next_page_number }}&search={{ search_query }}&status={{ status_filter }}" aria-label="Next">
+                            <span aria-hidden="true">Next &raquo;</span>
+                        </a>
                     </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link border-0 text-muted bg-transparent" aria-hidden="true">Next &raquo;</span>
+                    </li>
+                    {% endif %}
                 </ul>
             </nav>
         </div>
@@ -182,17 +202,37 @@
                 <div class="card-footer bg-white border-top py-3">
                     <nav aria-label="Support tickets pagination">
                         <ul class="pagination justify-content-center mb-0 pagination-sm">
-                            <li class="page-item {% if not tickets.has_previous %}disabled{% endif %}">
-                                <a class="page-link" href="{% if tickets.has_previous %}?page={{ tickets.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}{% else %}#{% endif %}">&laquo;</a>
+                            {% if tickets.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tickets.previous_page_number }}&search={{ search_query }}&status={{ status_filter }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo; Previous</span>
+                                </a>
                             </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link border-0 text-muted bg-transparent" aria-hidden="true">&laquo; Previous</span>
+                            </li>
+                            {% endif %}
                             {% for num in tickets.paginator.page_range %}
                             <li class="page-item {% if tickets.number == num %}active{% endif %}">
+                                {% if tickets.number == num %}
+                                <span class="page-link">{{ num }}</span>
+                                {% else %}
                                 <a class="page-link" href="?page={{ num }}&search={{ search_query }}&status={{ status_filter }}">{{ num }}</a>
+                                {% endif %}
                             </li>
                             {% endfor %}
-                            <li class="page-item {% if not tickets.has_next %}disabled{% endif %}">
-                                <a class="page-link" href="{% if tickets.has_next %}?page={{ tickets.next_page_number }}&search={{ search_query }}&status={{ status_filter }}{% else %}#{% endif %}">&raquo;</a>
+                            {% if tickets.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ tickets.next_page_number }}&search={{ search_query }}&status={{ status_filter }}" aria-label="Next">
+                                    <span aria-hidden="true">Next &raquo;</span>
+                                </a>
                             </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link border-0 text-muted bg-transparent" aria-hidden="true">Next &raquo;</span>
+                            </li>
+                            {% endif %}
                         </ul>
                     </nav>
                 </div>

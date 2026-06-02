@@ -31,4 +31,9 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/tickets/', api_views.APITicketListView.as_view(), name='api_tickets'),
     path('api/tickets/create/', api_views.APITicketCreateView.as_view(), name='api_tickets_create'),
+    
+    # V1 JWT API endpoints
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair_v1'),
+    path('api/v1/tickets/', api_views.APITicketListView.as_view(), name='api_tickets_v1'),
+    path('api/v1/tickets/create/', api_views.APITicketCreateView.as_view(), name='api_tickets_create_v1'),
 ]

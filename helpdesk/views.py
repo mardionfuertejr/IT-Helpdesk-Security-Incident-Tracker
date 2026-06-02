@@ -216,7 +216,7 @@ def ticket_list_view(request):
 
     from django.core.paginator import Paginator
     page = request.GET.get('page', 1)
-    paginator = Paginator(tickets.order_by('-created_at'), 4)
+    paginator = Paginator(tickets.order_by('-created_at'), 6)
     tickets_page = paginator.get_page(page)
 
     context = {
@@ -252,6 +252,11 @@ def ticket_create_view(request):
             priority=priority,
             description=description,
             attachment=attachment
+        )
+        TicketLog.objects.create(
+            ticket=ticket,
+            changed_by=request.user,
+            change_description=f"Ticket created: {title}"
         )
         logger.info(f"Ticket created: Ticket #{ticket.id} by {request.user.email}")
         messages.success(request, f"Ticket #{ticket.id} submitted successfully!")
@@ -340,6 +345,11 @@ def ticket_detail_view(request, ticket_id):
                     if attachment:
                         ticket.attachment = attachment
                     ticket.save()
+                    TicketLog.objects.create(
+                        ticket=ticket,
+                        changed_by=request.user,
+                        change_description=f"Ticket details edited by user."
+                    )
                     logger.info(f"Ticket edited: Ticket #{ticket.id} edited by {request.user.email}")
                     messages.success(request, f"Ticket #{ticket.id} updated successfully.")
                 else:
@@ -352,7 +362,13 @@ def ticket_detail_view(request, ticket_id):
             # Employee can delete own Open tickets; Manager can delete any ticket
             if (role == 'employee' and ticket.created_by == request.user and ticket.status == 'Open') or role == 'manager':
                 ticket_num = ticket.id
+                ticket_title = ticket.title
                 ticket.delete()
+                TicketLog.objects.create(
+                    ticket_id=None,
+                    changed_by=request.user,
+                    change_description=f"Ticket deleted: #{ticket_num} - {ticket_title}"
+                )
                 logger.info(f"Ticket deleted: Ticket #{ticket_num} deleted by {request.user.email}")
                 messages.success(request, f"Ticket #{ticket_num} has been deleted.")
                 return redirect('tickets')
@@ -405,6 +421,15 @@ def profile_view(request):
                 messages.error(request, "Email already in use.")
                 return redirect('profile')
 
+            # Track changes for audit log
+            changes = []
+            if user.full_name != full_name:
+                changes.append(f"Full name changed from '{user.full_name}' to '{full_name}'")
+            if user.email != email:
+                changes.append(f"Email changed from '{user.email}' to '{email}'")
+            if user.department != department:
+                changes.append(f"Department changed from '{user.department}' to '{department}'")
+
             user.full_name = full_name
             user.email = email
             user.department = department
@@ -418,7 +443,20 @@ def profile_view(request):
                     username = f"{base_username}{counter}"
                     counter += 1
                 user.username = username
+                changes.append(f"Username updated to '{username}'")
+            
             user.save()
+            
+            # Log the audit entry
+            if changes:
+                audit_desc = "Profile updated: " + " | ".join(changes)
+                TicketLog.objects.create(
+                    ticket_id=None,
+                    changed_by=user,
+                    change_description=audit_desc
+                )
+                logger.info(f"Profile updated for {user.email}: {audit_desc}")
+            
             messages.success(request, "Profile updated successfully.")
             return redirect('profile')
 
@@ -427,8 +465,19 @@ def profile_view(request):
             if profile_picture:
                 ext = os.path.splitext(profile_picture.name)[1].lower()
                 if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                    old_picture_name = user.profile_picture.name if user.profile_picture else "None"
                     user.profile_picture = profile_picture
                     user.save()
+                    
+                    # Log the audit entry
+                    audit_desc = f"Profile picture updated (from: {old_picture_name[:50]} to: {profile_picture.name[:50]})"
+                    TicketLog.objects.create(
+                        ticket_id=None,
+                        changed_by=user,
+                        change_description=audit_desc
+                    )
+                    logger.info(f"Avatar updated for {user.email}")
+                    
                     messages.success(request, "Profile picture updated successfully.")
                 else:
                     messages.error(request, "Invalid file type. Please upload an image.")
@@ -436,15 +485,28 @@ def profile_view(request):
 
         elif action == 'remove_avatar':
             if user.profile_picture:
+                old_picture_name = user.profile_picture.name
                 user.profile_picture.delete()
-            user.profile_picture = None
-            user.save()
-            messages.success(request, "Profile picture removed successfully.")
+                user.profile_picture = None
+                user.save()
+                
+                # Log the audit entry
+                audit_desc = f"Profile picture removed (was: {old_picture_name[:50]})"
+                TicketLog.objects.create(
+                    ticket_id=None,
+                    changed_by=user,
+                    change_description=audit_desc
+                )
+                logger.info(f"Avatar removed for {user.email}")
+                
+                messages.success(request, "Profile picture removed successfully.")
             return redirect('profile')
 
     # Fetch and paginate user activities
     all_tickets = Ticket.objects.filter(created_by=user).order_by('-created_at')
     all_updates = TicketUpdate.objects.filter(updated_by=user).order_by('-created_at')
+    all_ticket_logs = TicketLog.objects.filter(changed_by=user).order_by('-timestamp')
+    all_login_attempts = LoginAttempt.objects.filter(email_attempted=user.email).order_by('-timestamp')
     
     activity_list = []
     for t in all_tickets:
@@ -459,6 +521,19 @@ def profile_view(request):
             'desc': f"Updated ticket #{u.ticket.id}",
             'date': u.created_at
         })
+    for log in all_ticket_logs:
+        activity_list.append({
+            'icon': 'fa-clipboard-list text-warning',
+            'desc': log.change_description,
+            'date': log.timestamp
+        })
+    for login in all_login_attempts:
+        activity_list.append({
+            'icon': 'fa-right-to-bracket text-info' if login.success else 'fa-exclamation-triangle text-danger',
+            'desc': 'Successful login' if login.success else 'Failed login attempt',
+            'date': login.timestamp
+        })
+
     # Sort activity by date descending
     activity_list = sorted(activity_list, key=lambda x: x['date'], reverse=True)
 
@@ -486,6 +561,12 @@ def settings_view(request):
                 update_session_auth_hash(request, user)
                 messages.success(request, "Password changed successfully.")
                 
+                TicketLog.objects.create(
+                    ticket_id=None,
+                    changed_by=user,
+                    change_description="Security settings updated: Password changed."
+                )
+
                 # Check user security notification preferences
                 if user.notify_security:
                     logger.info(f"Security Alert: Password changed successfully for user {user.email}")
@@ -502,9 +583,23 @@ def settings_view(request):
         elif action == 'update_notifications':
             notify_tickets = request.POST.get('notify_tickets') == 'true'
             notify_security = request.POST.get('notify_security') == 'true'
+            
+            changes = []
+            if user.notify_tickets != notify_tickets:
+                changes.append(f"Ticket notifications {'enabled' if notify_tickets else 'disabled'}")
+            if user.notify_security != notify_security:
+                changes.append(f"Security notifications {'enabled' if notify_security else 'disabled'}")
+                
             user.notify_tickets = notify_tickets
             user.notify_security = notify_security
             user.save()
+            
+            if changes:
+                TicketLog.objects.create(
+                    ticket_id=None,
+                    changed_by=user,
+                    change_description="Notification preferences updated: " + " | ".join(changes)
+                )
             return JsonResponse({'status': 'success'})
 
     form = PasswordChangeForm(user)
@@ -678,92 +773,116 @@ def solutions_detail_view(request, slug):
 @login_required
 @ratelimit(key='ip', rate='5/m', method='POST', block=False)
 def submit_ticket(request):
-    if getattr(request, 'limited', False):
-        return HttpResponse("Too many requests. Please wait before submitting again.", status=429)
+    try:
+        if getattr(request, 'limited', False):
+            return HttpResponse("Too many requests. Please wait before submitting again.", status=429)
 
-    if request.method == 'POST':
-        form = TicketSubmissionForm(request.POST, request.FILES)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-            ticket.created_by = request.user
-            ticket.nist_stage = 'detection'
-            ticket.save()
+        if request.method == 'POST':
+            form = TicketSubmissionForm(request.POST, request.FILES)
+            if form.is_valid():
+                ticket = form.save(commit=False)
+                ticket.created_by = request.user
+                ticket.nist_stage = 'detection'
+                ticket.save()
 
-            # Create TicketLog entry
-            TicketLog.objects.create(
-                ticket=ticket,
-                changed_by=request.user,
-                change_description="Ticket submitted and initial NIST stage set to detection."
-            )
+                # Create TicketLog entry
+                TicketLog.objects.create(
+                    ticket=ticket,
+                    changed_by=request.user,
+                    change_description="Ticket submitted and initial NIST stage set to detection."
+                )
 
-            # Log using Python logging module (ticket_audit)
-            audit_logger.info("", extra={
-                'user': request.user.email,
-                'action': 'CREATE',
-                'id': ticket.id,
-                'detail': f"Ticket created via web form. Type: {ticket.ticket_type}, Priority: {ticket.priority}"
-            })
+                # Log using Python logging module (ticket_audit)
+                audit_logger.info("", extra={
+                    'user': request.user.email,
+                    'action': 'CREATE',
+                    'id': ticket.id,
+                    'detail': ticket.title
+                })
 
-            messages.success(request, "Ticket submitted successfully!")
-            return redirect('ticket_list')
-    else:
-        form = TicketSubmissionForm()
+                messages.success(request, "Ticket submitted successfully!")
+                return redirect('ticket_list')
+        else:
+            form = TicketSubmissionForm()
 
-    return render(request, 'helpdesk/ticket_form.html', {'form': form})
+        return render(request, 'helpdesk/ticket_form.html', {'form': form})
+    except Exception as e:
+        audit_logger.error(f"Error in submit_ticket: {str(e)}")
+        raise e
 
 
 @login_required
 def update_ticket_stage(request, ticket_id):
-    if request.method == 'POST':
-        ticket = get_object_or_404(Ticket, id=ticket_id)
-        new_stage = request.POST.get('nist_stage')
-        if new_stage in ['preparation', 'detection', 'containment', 'recovery', 'closed']:
-            old_stage = ticket.nist_stage
-            ticket.nist_stage = new_stage
-            ticket.save()
+    try:
+        if request.method == 'POST':
+            ticket = get_object_or_404(Ticket, id=ticket_id)
+            new_stage = request.POST.get('nist_stage')
+            if new_stage in ['preparation', 'detection', 'containment', 'recovery', 'closed']:
+                old_stage = ticket.nist_stage
+                ticket.nist_stage = new_stage
+                ticket.save()
 
-            # Create TicketLog entry
-            TicketLog.objects.create(
-                ticket=ticket,
-                changed_by=request.user,
-                change_description=f"NIST stage updated from {old_stage} to {new_stage}."
-            )
+                # Create TicketLog entry
+                TicketLog.objects.create(
+                    ticket=ticket,
+                    changed_by=request.user,
+                    change_description=f"NIST stage updated from {old_stage} to {new_stage}."
+                )
 
-            # Log every update using Python logging
-            audit_logger.info("", extra={
-                'user': request.user.email,
-                'action': 'UPDATE_STAGE',
-                'id': ticket.id,
-                'detail': f"Changed stage from {old_stage} to {new_stage}"
-            })
+                # Log every update using Python logging
+                audit_logger.info("", extra={
+                    'user': request.user.email,
+                    'action': 'UPDATE',
+                    'id': ticket.id,
+                    'detail': f"{old_stage} | {new_stage}"
+                })
 
-            messages.success(request, f"Ticket stage updated to {new_stage.capitalize()}.")
-        else:
-            messages.error(request, "Invalid NIST stage.")
+                messages.success(request, f"Ticket stage updated to {new_stage.capitalize()}.")
+            else:
+                messages.error(request, "Invalid NIST stage.")
 
-    return redirect('ticket_list')
+        return redirect('ticket_list')
+    except Exception as e:
+        audit_logger.error(f"Error in update_ticket_stage: {str(e)}")
+        raise e
 
 
 @login_required
 def ticket_list(request):
-    tickets = Ticket.objects.filter(assigned_to=request.user)
+    try:
+        tickets = Ticket.objects.select_related('created_by', 'assigned_to').filter(assigned_to=request.user)
 
-    nist_stage = request.GET.get('nist_stage')
-    is_resolved = request.GET.get('is_resolved')
+        stage = request.GET.get('stage')
+        resolved = request.GET.get('resolved')
 
-    if nist_stage:
-        tickets = tickets.filter(nist_stage=nist_stage)
+        if stage:
+            tickets = tickets.filter(nist_stage=stage)
 
-    if is_resolved is not None and is_resolved != '':
-        if is_resolved.lower() in ['true', '1', 'yes']:
-            tickets = tickets.filter(is_resolved=True)
-        elif is_resolved.lower() in ['false', '0', 'no']:
-            tickets = tickets.filter(is_resolved=False)
+        if resolved is not None and resolved != '':
+            if resolved.lower() in ['true', '1', 'yes']:
+                tickets = tickets.filter(is_resolved=True)
+            elif resolved.lower() in ['false', '0', 'no']:
+                tickets = tickets.filter(is_resolved=False)
 
-    context = {
-        'tickets': tickets,
-        'nist_stage_filter': nist_stage,
-        'is_resolved_filter': is_resolved,
-    }
-    return render(request, 'helpdesk/ticket_list.html', context)
+        context = {
+            'tickets': tickets,
+            'nist_stage_filter': stage,
+            'is_resolved_filter': resolved,
+        }
+        return render(request, 'helpdesk/ticket_list.html', context)
+    except Exception as e:
+        audit_logger.error(f"Error in ticket_list: {str(e)}")
+        raise e
+
+def bad_request(request, exception):
+    return render(request, 'errors/400.html', status=400)
+
+def forbidden(request, exception):
+    return render(request, 'errors/403.html', status=403)
+
+def page_not_found(request, exception):
+    return render(request, 'errors/404.html', status=404)
+
+def server_error(request):
+    return render(request, 'errors/500.html', status=500)
 

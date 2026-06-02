@@ -35,9 +35,17 @@ urlpatterns = [
     
     # API Endpoints
     path('api/', include(router.urls)),
+    path('api/v1/', include(router.urls)),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/v1/token/', TokenObtainPairView.as_view(), name='token_obtain_pair_v1'),
+    path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh_v1'),
 ]
+
+handler400 = 'helpdesk.views.bad_request'
+handler403 = 'helpdesk.views.forbidden'
+handler404 = 'helpdesk.views.page_not_found'
+handler500 = 'helpdesk.views.server_error'
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -169,6 +169,10 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
 
 # Custom Authentication Backends (Axes)
 AUTHENTICATION_BACKENDS = [
@@ -181,7 +185,15 @@ AUTHENTICATION_BACKENDS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '10/minute',
+        'user': '60/minute'
+    }
 }
 
 # SimpleJWT Settings
@@ -200,6 +212,12 @@ AXES_LOCKOUT_TEMPLATE = 'helpdesk/access_denied.html'
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Cloudinary Storage Settings (will use CLOUDINARY_URL from environment)
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    'SECURE': True,
+}
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Email settings for development (output to console)
@@ -219,6 +237,10 @@ LOGGING = {
             'format': '[{asctime}] USER: {user} | ACTION: {action} | TICKET_ID: {id} | DETAIL: {detail}',
             'style': '{',
         },
+        'standard': {
+            'format': '[{asctime}] {levelname} {name}: {message}',
+            'style': '{',
+        },
     },
     'handlers': {
         'ticket_audit_file': {
@@ -227,12 +249,29 @@ LOGGING = {
             'filename': os.path.join(LOGS_DIR, 'ticket_audit.log'),
             'formatter': 'ticket_audit_formatter',
         },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGS_DIR, 'error.log'),
+            'formatter': 'standard',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGS_DIR, 'security.log'),
+            'formatter': 'standard',
+        },
     },
     'loggers': {
         'ticket_audit': {
             'handlers': ['ticket_audit_file'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'django': {
+            'handlers': ['error_file', 'security_file'],
+            'level': 'WARNING',
+            'propagate': True,
         },
     },
 }

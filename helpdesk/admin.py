@@ -21,16 +21,20 @@ class TicketAdmin(admin.ModelAdmin):
             return
         
         updated_count = 0
+        tickets_to_update = []
+        logs_to_create = []
         for ticket in queryset:
             if not ticket.is_resolved:
                 ticket.is_resolved = True
-                ticket.save()
+                tickets_to_update.append(ticket)
                 
                 # Write to database audit trail
-                TicketLog.objects.create(
-                    ticket=ticket,
-                    changed_by=request.user,
-                    change_description="Ticket marked as resolved via admin bulk action."
+                logs_to_create.append(
+                    TicketLog(
+                        ticket=ticket,
+                        changed_by=request.user,
+                        change_description="Ticket marked as resolved via admin bulk action."
+                    )
                 )
                 
                 # Log using python logging module
@@ -43,6 +47,10 @@ class TicketAdmin(admin.ModelAdmin):
                     'detail': "Ticket marked as resolved via admin bulk action."
                 })
                 updated_count += 1
+                
+        if tickets_to_update:
+            Ticket.objects.bulk_update(tickets_to_update, ['is_resolved'])
+            TicketLog.objects.bulk_create(logs_to_create)
                 
         self.message_user(request, f"Successfully marked {updated_count} tickets as resolved.")
 
@@ -62,3 +70,4 @@ class TicketLogAdmin(admin.ModelAdmin):
     list_display = ('id', 'ticket', 'changed_by', 'change_description', 'timestamp')
     search_fields = ('ticket__title', 'changed_by__username', 'change_description')
     list_filter = ('timestamp',)
+    readonly_fields = ('ticket', 'changed_by', 'change_description', 'timestamp')

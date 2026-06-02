@@ -1,5 +1,8 @@
+from cloudinary_storage.storage import MediaCloudinaryStorage
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+
+cloudinary_storage = MediaCloudinaryStorage()
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -10,7 +13,7 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee')
     department = models.CharField(max_length=100, default='IT & Systems')
-    profile_picture = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures/', storage=cloudinary_storage, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     notify_tickets = models.BooleanField(default=True)
     notify_security = models.BooleanField(default=True)
@@ -63,11 +66,26 @@ class Ticket(models.Model):
     ticket_type = models.CharField(max_length=50, choices=TICKET_TYPE_CHOICES, default='IT Support')
     nist_stage = models.CharField(max_length=50, choices=NIST_STAGE_CHOICES, default='preparation')
     description = models.TextField()
-    attachment = models.FileField(upload_to='attachments/tickets/', blank=True, null=True)
+    attachment = models.FileField(upload_to='attachments/tickets/', storage=cloudinary_storage, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
     is_resolved = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['title', 'created_by']
+        indexes = [
+            models.Index(fields=['nist_stage']),
+            models.Index(fields=['created_by']),
+            models.Index(fields=['is_resolved']),
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.is_resolved and self.nist_stage != 'closed':
+            raise ValidationError("Resolved tickets must be Closed.")
+        if self.ticket_type == 'Security Incident' and self.priority == 'Low':
+            raise ValidationError("Security tickets cant be Low priority.")
 
     @property
     def attachment_filename(self):
@@ -203,10 +221,13 @@ class LoginAttempt(models.Model):
         return f"{self.email_attempted} - {status} at {self.timestamp}"
 
 class TicketLog(models.Model):
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='logs')
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='logs', null=True, blank=True)
     changed_by = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     change_description = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Log #{self.id} for Ticket #{self.ticket.id} by {self.changed_by.username}"
+        if self.ticket:
+            return f"Log #{self.id} for Ticket #{self.ticket.id} by {self.changed_by.username}"
+        else:
+            return f"Log #{self.id} (Account) by {self.changed_by.username}"
