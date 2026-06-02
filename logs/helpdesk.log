@@ -1,0 +1,191 @@
+[2026-06-02 10:14:47,486] INFO - User login: employee@company.com
+[2026-06-02 10:16:21,615] INFO - User logout: employee@company.com
+[2026-06-02 10:16:27,120] INFO - User login: manager@company.com
+[2026-06-02 10:16:36,950] INFO - User logout: manager@company.com
+[2026-06-02 10:16:42,743] INFO - User login: manager@company.com
+[2026-06-02 10:26:43,182] INFO - User registered: 123@gmail.com
+[2026-06-02 10:26:54,120] INFO - User login: 123@gmail.com
+[2026-06-02 10:28:06,754] INFO - User logout: 123@gmail.com
+[2026-06-02 10:28:32,765] INFO - User login: 123@gmail.com
+[2026-06-02 10:28:49,006] INFO - User logout: 123@gmail.com
+[2026-06-02 10:28:52,405] INFO - User login: 123@gmail.com
+[2026-06-02 10:40:22,330] INFO - User logout: 123@gmail.com
+[2026-06-02 10:40:25,654] INFO - User login: 123@gmail.com
+[2026-06-02 10:53:51,112] INFO - Ticket created: Ticket #27 by 123@gmail.com
+[2026-06-02 11:03:35,078] INFO - User logout: 123@gmail.com
+[2026-06-02 11:04:29,749] INFO - User registered: mardion@gmail.com
+[2026-06-02 11:04:43,363] INFO - User login: mardion@gmail.com
+[2026-06-02 11:13:23,999] INFO - User logout: mardion@gmail.com
+[2026-06-02 11:13:30,864] INFO - User login: mardion@gmail.com
+[2026-06-02 11:13:34,683] INFO - User logout: mardion@gmail.com
+[2026-06-02 11:13:37,463] INFO - User login: mardion@gmail.com
+[2026-06-02 11:13:41,074] INFO - User logout: mardion@gmail.com
+[2026-06-02 11:13:45,632] INFO - User login: 123@gmail.com
+[2026-06-02 11:19:50,764] INFO - User logout: 123@gmail.com
+[2026-06-02 13:31:22,110] INFO - User logout: manager@company.com
+[2026-06-02 13:36:51,341] INFO - User login: manager@company.com
+[2026-06-02 13:37:48,302] INFO - Status changed: Ticket #27 status changed from Open to Resolved by manager@company.com
+[2026-06-02 13:38:15,899] INFO - Status changed: Ticket #27 status changed from Resolved to Closed by manager@company.com
+[2026-06-02 13:38:15,900] INFO - Ticket closed: Ticket #27 closed by manager@company.com
+[2026-06-02 13:44:05,488] INFO - User logout: manager@company.com
+[2026-06-02 13:44:16,981] INFO - User login: dev@company.com
+[2026-06-02 13:44:46,187] INFO - User logout: dev@company.com
+[2026-06-02 13:46:03,798] INFO - User login: dev@company.com
+[2026-06-02 13:46:32,407] INFO - User logout: dev@company.com
+[2026-06-02 13:46:40,718] INFO - User login: employee@company.com
+[2026-06-02 13:53:49,552] INFO - User logout: admin@company.com
+[2026-06-02 13:53:52,600] INFO - User login: dev@company.com
+[2026-06-02 14:00:33,336] INFO - Ticket created: Ticket #28 by dev@company.com
+[2026-06-02 14:01:32,664] INFO - User logout: dev@company.com
+[2026-06-02 14:01:36,185] INFO - User login: dev@company.com
+[2026-06-02 14:03:23,709] INFO - User logout: dev@company.com
+[2026-06-02 14:03:52,162] INFO - User login: dev@company.com
+[2026-06-02 14:03:53,634] INFO - User login: dev@company.com
+[2026-06-02 14:04:28,455] INFO - User logout: dev@company.com
+[2026-06-02 14:04:32,101] INFO - User login: dev@company.com
+[2026-06-02 14:04:52,699] INFO - User logout: dev@company.com
+[2026-06-02 14:05:18,268] INFO - User login: manager@company.com
+[2026-06-02 14:07:25,485] INFO - Status changed: Ticket #24 status changed from Investigating to Closed by manager@company.com
+[2026-06-02 14:07:25,487] INFO - Ticket closed: Ticket #24 closed by manager@company.com
+[2026-06-02 14:08:54,631] INFO - User logout: manager@company.com
+[2026-06-02 14:08:58,191] INFO - User login: dev@company.com
+[2026-06-02 14:40:35,109] INFO - Ticket created: Ticket #29 by dev@company.com
+[2026-06-02 14:41:20,125] INFO - Ticket created: Ticket #30 by dev@company.com
+[2026-06-02 14:54:22,823] INFO - Ticket edited: Ticket #28 edited by dev@company.com
+[2026-06-02 14:57:03,440] INFO - User logout: dev@company.com
+[2026-06-02 14:57:14,766] INFO - User login: manager@company.com
+[2026-06-02 14:57:50,040] INFO - Status changed: Ticket #30 status changed from Open to Investigating by manager@company.com
+[2026-06-02 14:58:12,129] INFO - User logout: manager@company.com
+[2026-06-02 14:58:15,301] INFO - User login: dev@company.com
+[2026-06-02 15:13:21,570] INFO - User logout: dev@company.com
+[2026-06-02 15:13:29,112] INFO - User login: manager@company.com
+[2026-06-02 15:13:33,717] INFO - User logout: manager@company.com
+[2026-06-02 15:13:40,941] INFO - User login: manager@company.com
+[2026-06-02 15:15:00,710] INFO - Status changed: Ticket #28 status changed from Open to Resolved by manager@company.com
+[2026-06-02 15:22:45,910] INFO - User logout: manager@company.com
+[2026-06-02 15:22:55,083] INFO - User login: dev@company.com
+[2026-06-02 15:34:15,927] INFO - User logout: dev@company.com
+[2026-06-02 15:34:24,346] INFO - User login: manager@company.com
+[2026-06-02 16:36:38,463] INFO - User login: 123@gmail.com
+[2026-06-02 16:36:43,582] INFO - User logout: 123@gmail.com
+[2026-06-02 16:36:46,854] INFO - User login: 123@gmail.com
+[2026-06-02 16:45:40,188] INFO - User logout: manager@company.com
+[2026-06-02 16:45:46,027] INFO - User login: dev@company.com
+[2026-06-02 16:50:38,132] INFO - User logout: dev@company.com
+[2026-06-02 16:50:43,477] INFO - User login: manager@company.com
+[2026-06-02 16:50:43,479] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 16:51:46,385] INFO - Ticket created: Ticket #31 by admin@company.com
+[2026-06-02 16:52:23,462] INFO - Status changed: Ticket #31 status changed from Open to Investigating by manager@company.com
+[2026-06-02 16:52:23,467] INFO - Notification sent: Notify admin@company.com of status update (Investigating) on Ticket #31
+[2026-06-02 16:52:50,034] INFO - Notification sent: Notify admin@company.com of note added to Ticket #31
+[2026-06-02 16:59:20,848] INFO - Status changed: Ticket #31 status changed from Investigating to Closed by manager@company.com
+[2026-06-02 16:59:20,853] INFO - Ticket closed: Ticket #31 closed by manager@company.com
+[2026-06-02 16:59:20,857] INFO - Notification sent: Notify admin@company.com of status update (Closed) on Ticket #31
+[2026-06-02 16:59:44,331] INFO - Status changed: Ticket #31 status changed from Closed to Resolved by manager@company.com
+[2026-06-02 16:59:44,339] INFO - Notification sent: Notify admin@company.com of status update (Resolved) on Ticket #31
+[2026-06-02 17:00:02,580] INFO - User logout: admin@company.com
+[2026-06-02 17:00:37,459] INFO - User login: dev@company.com
+[2026-06-02 17:00:37,461] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 17:08:26,533] INFO - User logout: dev@company.com
+[2026-06-02 17:08:30,862] INFO - User login: dev@company.com
+[2026-06-02 17:08:30,864] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 17:31:36,969] INFO - User logout: admin@company.com
+[2026-06-02 17:31:43,045] INFO - User login: dev@company.com
+[2026-06-02 17:31:43,047] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 17:35:05,663] INFO - User logout: admin@company.com
+[2026-06-02 17:35:17,395] INFO - User login: manager@company.com
+[2026-06-02 17:35:17,398] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 17:35:28,887] INFO - User logout: manager@company.com
+[2026-06-02 17:35:34,817] INFO - User login: dev@company.com
+[2026-06-02 17:35:34,818] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 17:55:22,078] INFO - User logout: dev@company.com
+[2026-06-02 17:55:28,261] INFO - User login: manager@company.com
+[2026-06-02 17:55:28,265] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 17:56:03,933] INFO - User logout: manager@company.com
+[2026-06-02 17:56:10,619] INFO - User login: dev@company.com
+[2026-06-02 17:56:10,621] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 17:56:12,256] INFO - User login: dev@company.com
+[2026-06-02 17:56:12,258] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 17:59:58,286] INFO - User logout: dev@company.com
+[2026-06-02 18:00:02,279] INFO - User login: dev@company.com
+[2026-06-02 18:00:02,284] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 18:00:39,355] INFO - User logout: dev@company.com
+[2026-06-02 18:00:46,924] INFO - User login: manager@company.com
+[2026-06-02 18:00:46,925] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 18:08:24,828] INFO - User logout: manager@company.com
+[2026-06-02 18:08:31,511] INFO - User login: dev@company.com
+[2026-06-02 18:08:31,514] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 18:14:04,186] INFO - Status changed: Ticket #31 status changed from Resolved to Closed by manager@company.com
+[2026-06-02 18:14:04,188] INFO - Ticket closed: Ticket #31 closed by manager@company.com
+[2026-06-02 18:14:04,192] INFO - Notification sent: Notify admin@company.com of status update (Closed) on Ticket #31
+[2026-06-02 18:34:16,557] INFO - User logout: dev@company.com
+[2026-06-02 18:34:56,648] INFO - User login: dev@company.com
+[2026-06-02 18:34:56,651] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 18:38:20,145] INFO - User logout: dev@company.com
+[2026-06-02 18:38:27,799] INFO - User login: manager@company.com
+[2026-06-02 18:38:27,800] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 18:38:29,482] INFO - User login: manager@company.com
+[2026-06-02 18:38:29,483] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 18:40:28,331] INFO - Status changed: Ticket #31 status changed from Closed to Investigating by manager@company.com
+[2026-06-02 18:40:28,334] INFO - Notification sent: Notify admin@company.com of status update (Investigating) on Ticket #31
+[2026-06-02 18:40:45,112] INFO - Notification sent: Notify admin@company.com of note added to Ticket #31
+[2026-06-02 18:40:47,431] INFO - User logout: manager@company.com
+[2026-06-02 18:40:55,511] INFO - User login: dev@company.com
+[2026-06-02 18:40:55,514] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 18:46:16,559] INFO - User logout: dev@company.com
+[2026-06-02 18:46:32,847] INFO - User login: manager@company.com
+[2026-06-02 18:46:32,848] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 18:47:16,643] INFO - User logout: manager@company.com
+[2026-06-02 18:47:33,478] INFO - User login: manager@company.com
+[2026-06-02 18:47:33,479] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 21:17:10,484] INFO - User logout: manager@company.com
+[2026-06-02 21:18:33,873] INFO - User login: dev@company.com
+[2026-06-02 21:18:33,876] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 21:19:26,202] INFO - User logout: dev@company.com
+[2026-06-02 21:22:01,420] INFO - User login: dev@company.com
+[2026-06-02 21:22:01,425] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 21:22:03,007] INFO - User login: dev@company.com
+[2026-06-02 21:22:03,014] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 21:23:39,680] INFO - User logout: dev@company.com
+[2026-06-02 21:23:46,031] INFO - User login: manager@company.com
+[2026-06-02 21:23:46,033] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 21:24:06,421] INFO - Status changed: Ticket #31 status changed from Investigating to Closed by manager@company.com
+[2026-06-02 21:24:06,422] INFO - Ticket closed: Ticket #31 closed by manager@company.com
+[2026-06-02 21:24:06,427] INFO - Notification sent: Notify admin@company.com of status update (Closed) on Ticket #31
+[2026-06-02 21:24:14,502] INFO - Notification sent: Notify admin@company.com of note added to Ticket #31
+[2026-06-02 21:28:32,453] INFO - Status changed: Ticket #31 status changed from Closed to Closed by manager@company.com
+[2026-06-02 21:28:32,454] INFO - Ticket closed: Ticket #31 closed by manager@company.com
+[2026-06-02 21:28:32,459] INFO - Notification sent: Notify admin@company.com of status update (Closed) on Ticket #31
+[2026-06-02 21:51:28,871] INFO - User logout: manager@company.com
+[2026-06-02 21:51:49,484] INFO - User login: manager@company.com
+[2026-06-02 21:51:49,485] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 22:13:40,566] INFO - User logout: manager@company.com
+[2026-06-02 22:13:46,592] INFO - User login: dev@company.com
+[2026-06-02 22:13:46,595] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 22:14:22,392] INFO - Ticket created: Ticket #32 by dev@company.com
+[2026-06-02 22:14:32,532] INFO - Ticket created: Ticket #33 by dev@company.com
+[2026-06-02 22:14:43,233] INFO - Ticket created: Ticket #34 by dev@company.com
+[2026-06-02 22:14:51,067] INFO - Ticket created: Ticket #35 by dev@company.com
+[2026-06-02 22:15:02,214] INFO - Ticket created: Ticket #36 by dev@company.com
+[2026-06-02 22:17:06,046] INFO - User logout: dev@company.com
+[2026-06-02 22:17:11,129] INFO - User login: dev@company.com
+[2026-06-02 22:17:11,130] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 22:17:12,769] INFO - User login: dev@company.com
+[2026-06-02 22:17:12,770] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 22:17:13,870] INFO - User login: dev@company.com
+[2026-06-02 22:17:13,873] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 22:17:15,583] INFO - User login: dev@company.com
+[2026-06-02 22:17:15,587] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 22:17:16,842] INFO - User login: dev@company.com
+[2026-06-02 22:17:16,843] INFO - Security Alert: Secure login detected for account dev@company.com
+[2026-06-02 22:18:00,125] INFO - Ticket edited: Ticket #36 edited by dev@company.com
+[2026-06-02 22:18:03,216] INFO - User logout: dev@company.com
+[2026-06-02 22:18:09,624] INFO - User login: manager@company.com
+[2026-06-02 22:18:09,625] INFO - Security Alert: Secure login detected for account manager@company.com
+[2026-06-02 22:18:33,973] INFO - Status changed: Ticket #33 status changed from Open to Closed by manager@company.com
+[2026-06-02 22:18:33,975] INFO - Ticket closed: Ticket #33 closed by manager@company.com
+[2026-06-02 22:18:33,978] INFO - Notification sent: Notify dev@company.com of status update (Closed) on Ticket #33
+[2026-06-02 22:18:43,650] INFO - Notification sent: Notify dev@company.com of note added to Ticket #33
+[2026-06-02 22:18:45,726] INFO - User logout: manager@company.com
+[2026-06-02 22:18:51,829] INFO - User login: dev@company.com
+[2026-06-02 22:18:51,830] INFO - Security Alert: Secure login detected for account dev@company.com

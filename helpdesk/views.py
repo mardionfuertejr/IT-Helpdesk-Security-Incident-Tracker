@@ -1,0 +1,769 @@
+import logging
+import os
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
+from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
+from django.db.models import Q
+from django_ratelimit.decorators import ratelimit
+
+from .models import CustomUser, Ticket, TicketUpdate, LoginAttempt, TicketLog
+from .forms import TicketSubmissionForm
+
+audit_logger = logging.getLogger('ticket_audit')
+
+# Setup standard python logging
+logger = logging.getLogger('helpdesk')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    formatter = logging.Formatter('[%(asctime)s] %(levelname)s - %(message)s')
+    # Console handler
+    ch = logging.StreamHandler()
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    
+    # File handler inside logs/ directory
+    log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir, exist_ok=True)
+    fh = logging.FileHandler(os.path.join(log_dir, 'helpdesk.log'))
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        department = request.POST.get('department', '').strip()
+        password = request.POST.get('password', '')
+        confirm_password = request.POST.get('confirm_password', '')
+        profile_picture = request.FILES.get('profile_picture')
+        
+        if not full_name or not email or not password or not confirm_password:
+            messages.error(request, "Please enter all required fields.")
+            return render(request, 'helpdesk/register.html')
+            
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match.")
+            return render(request, 'helpdesk/register.html')
+            
+        if CustomUser.objects.filter(email=email).exists():
+            messages.error(request, "An account with this email already exists.")
+            return render(request, 'helpdesk/register.html')
+            
+        username = email.split('@')[0]
+        base_username = username
+        counter = 1
+        while CustomUser.objects.filter(username=username).exists():
+            username = f"{base_username}{counter}"
+            counter += 1
+            
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            role='employee',
+            full_name=full_name,
+            department=department,
+            profile_picture=profile_picture
+        )
+        logger.info(f"User registered: {user.email}")
+        messages.success(request, "Account created successfully! Please sign in.")
+        return redirect('login')
+        
+    return render(request, 'helpdesk/register.html')
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+        
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        password = request.POST.get('password', '')
+        
+        # Get client IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip_address = request.META.get('REMOTE_ADDR')
+            
+        try:
+            user_obj = CustomUser.objects.get(email=email)
+            username = user_obj.username
+        except CustomUser.DoesNotExist:
+            username = None
+            
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            if not user.is_active:
+                LoginAttempt.objects.create(email_attempted=email, success=False, ip_address=ip_address)
+                messages.error(request, "Your account has been deactivated.")
+                return render(request, 'helpdesk/login.html')
+                
+            LoginAttempt.objects.create(email_attempted=email, success=True, ip_address=ip_address)
+            login(request, user)
+            logger.info(f"User login: {user.email}")
+            
+            # Check user security notification preferences
+            if user.notify_security:
+                logger.info(f"Security Alert: Secure login detected for account {user.email}")
+                send_mail(
+                    subject="Security Alert: New Login Detected",
+                    message=f"Hi {user.full_name or user.username},\n\nA login was detected for your account at {user.email}.\n\nIf this wasn't you, please change your password immediately in Settings.",
+                    from_email=None,
+                    recipient_list=[user.email],
+                    fail_silently=True,
+                )
+                
+            return redirect('dashboard')
+        else:
+            LoginAttempt.objects.create(email_attempted=email, success=False, ip_address=ip_address)
+            messages.error(request, "Invalid email or password.")
+            
+    return render(request, 'helpdesk/login.html')
+
+def logout_view(request):
+    if request.user.is_authenticated:
+        logger.info(f"User logout: {request.user.email}")
+    logout(request)
+    return redirect('login')
+
+@login_required
+def dashboard_view(request):
+    user = request.user
+    role = 'manager' if user.is_superuser else user.role
+    if role == 'manager':
+        # Manager metrics
+        tickets = Ticket.objects.all()
+        total_tickets = tickets.count()
+        open_tickets = tickets.filter(status='Open').count()
+        investigating_tickets = tickets.filter(status='Investigating').count()
+        resolved_tickets = tickets.filter(status='Resolved').count()
+        closed_tickets = tickets.filter(status='Closed').count()
+        
+        recent_tickets = tickets.order_by('-created_at')[:5]
+        
+        context = {
+            'role': user.role,
+            'total_tickets': total_tickets,
+            'open_tickets': open_tickets,
+            'investigating_tickets': investigating_tickets,
+            'resolved_tickets': resolved_tickets,
+            'closed_tickets': closed_tickets,
+            'recent_tickets': recent_tickets,
+            'active_tab': 'dashboard',
+        }
+    else:
+        # Employee metrics: Remove statistics cards, only show recent tickets and options
+        my_tickets = Ticket.objects.filter(created_by=user)
+        recent_tickets = my_tickets.order_by('-created_at')[:3] # last 3 tickets only
+        
+        context = {
+            'role': user.role,
+            'recent_tickets': recent_tickets,
+            'active_tab': 'dashboard',
+        }
+        
+    return render(request, 'helpdesk/dashboard.html', context)
+
+@login_required
+def ticket_list_view(request):
+    role = 'manager' if request.user.is_superuser else request.user.role
+    
+    if request.method == 'POST' and role == 'manager':
+        action = request.POST.get('action')
+        selected_ids = request.POST.getlist('selected_tickets')
+        
+        if action == 'close' and selected_ids:
+            tickets_to_close = Ticket.objects.filter(id__in=selected_ids, status='Resolved')
+            count = tickets_to_close.count()
+            if count:
+                for t in tickets_to_close:
+                    t.status = 'Closed'
+                    t.save()
+                    logger.info(f"Ticket closed: Ticket #{t.id} closed by {request.user.email} (Bulk Close)")
+                messages.success(request, f"Successfully closed {count} resolved tickets.")
+            else:
+                messages.warning(request, "Only tickets with status 'Resolved' can be bulk closed.")
+            return redirect('tickets')
+
+    # Get base tickets based on role
+    if role == 'employee':
+        tickets = Ticket.objects.filter(created_by=request.user)
+    else:
+        tickets = Ticket.objects.all()
+
+    # Search & status filters only
+    search_query = request.GET.get('search', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
+    if search_query:
+        tickets = tickets.filter(
+            Q(title__icontains=search_query) | 
+            Q(description__icontains=search_query) |
+            Q(id__icontains=search_query)
+        )
+    if status_filter:
+        tickets = tickets.filter(status=status_filter)
+
+    from django.core.paginator import Paginator
+    page = request.GET.get('page', 1)
+    paginator = Paginator(tickets.order_by('-created_at'), 4)
+    tickets_page = paginator.get_page(page)
+
+    context = {
+        'role': role,
+        'tickets': tickets_page,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'active_tab': 'tickets',
+    }
+    return render(request, 'helpdesk/tickets.html', context)
+
+@login_required
+@ratelimit(key='ip', rate='5/m', method='POST', block=False)
+def ticket_create_view(request):
+    if getattr(request, 'limited', False):
+        return HttpResponse("Rate Limit Exceeded. Maximum 5 ticket submissions per minute.", status=429)
+
+    if request.method == 'POST':
+        title = request.POST.get('title', '').strip()
+        category = request.POST.get('category', '').strip()
+        priority = request.POST.get('priority', '').strip()
+        description = request.POST.get('description', '').strip()
+        attachment = request.FILES.get('attachment')
+
+        if not title or not category or not priority or not description:
+            messages.error(request, "Please enter all required fields.")
+            return redirect('create_ticket')
+
+        ticket = Ticket.objects.create(
+            created_by=request.user,
+            title=title,
+            category=category,
+            priority=priority,
+            description=description,
+            attachment=attachment
+        )
+        logger.info(f"Ticket created: Ticket #{ticket.id} by {request.user.email}")
+        messages.success(request, f"Ticket #{ticket.id} submitted successfully!")
+        return redirect('tickets')
+
+    return render(request, 'helpdesk/create_ticket.html', {'active_tab': 'create_ticket'})
+
+@login_required
+def ticket_detail_view(request, ticket_id):
+    role = 'manager' if request.user.is_superuser else request.user.role
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    # SR-02 Anti-IDOR: Employees attempting to access tickets they don't own get 403 Forbidden
+    if role == 'employee' and ticket.created_by != request.user:
+        raise PermissionDenied("403 Forbidden")
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'add_note':
+            # Manager only notes
+            if role != 'manager':
+                raise PermissionDenied("Only IT Managers can add updates/notes.")
+            comment = request.POST.get('comment', '').strip()
+            if comment:
+                TicketUpdate.objects.create(
+                    ticket=ticket,
+                    comment=comment,
+                    updated_by=request.user
+                )
+                messages.success(request, "Ticket update note added.")
+                
+                # Check user notification preferences
+                ticket_owner = ticket.created_by
+                if ticket_owner.notify_tickets:
+                    logger.info(f"Notification sent: Notify {ticket_owner.email} of note added to Ticket #{ticket.id}")
+                    send_mail(
+                        subject=f"New Note Added to Ticket #{ticket.id}",
+                        message=f"Hi {ticket_owner.full_name or ticket_owner.username},\n\nIT Manager {request.user.full_name or request.user.username} added a note to your ticket:\n\n\"{comment}\"\n\nView details: http://127.0.0.1:8000/tickets/{ticket.id}/",
+                        from_email=None,
+                        recipient_list=[ticket_owner.email],
+                        fail_silently=True,
+                    )
+            return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif action == 'update_status':
+            if role != 'manager':
+                raise PermissionDenied("Only IT Managers can modify status.")
+            status = request.POST.get('status')
+            if status in dict(Ticket.STATUS_CHOICES):
+                old_status = ticket.status
+                ticket.status = status
+                ticket.save()
+                logger.info(f"Status changed: Ticket #{ticket.id} status changed from {old_status} to {status} by {request.user.email}")
+                if status == 'Closed':
+                    logger.info(f"Ticket closed: Ticket #{ticket.id} closed by {request.user.email}")
+                messages.success(request, f"Status updated to {status}.")
+                
+                # Check user notification preferences
+                ticket_owner = ticket.created_by
+                if ticket_owner.notify_tickets:
+                    logger.info(f"Notification sent: Notify {ticket_owner.email} of status update ({status}) on Ticket #{ticket.id}")
+                    send_mail(
+                        subject=f"Status Updated: Ticket #{ticket.id}",
+                        message=f"Hi {ticket_owner.full_name or ticket_owner.username},\n\nIT Manager {request.user.full_name or request.user.username} updated the status of your ticket \"{ticket.title}\" from {old_status} to {status}.\n\nView details: http://127.0.0.1:8000/tickets/{ticket.id}/",
+                        from_email=None,
+                        recipient_list=[ticket_owner.email],
+                        fail_silently=True,
+                    )
+            return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif action == 'edit_ticket':
+            # Employee can only edit their own Open tickets
+            if role == 'employee' and ticket.created_by == request.user and ticket.status == 'Open':
+                title = request.POST.get('title', '').strip()
+                category = request.POST.get('category', '').strip()
+                priority = request.POST.get('priority', '').strip()
+                description = request.POST.get('description', '').strip()
+                attachment = request.FILES.get('attachment')
+
+                if title and category and priority and description:
+                    ticket.title = title
+                    ticket.category = category
+                    ticket.priority = priority
+                    ticket.description = description
+                    if attachment:
+                        ticket.attachment = attachment
+                    ticket.save()
+                    logger.info(f"Ticket edited: Ticket #{ticket.id} edited by {request.user.email}")
+                    messages.success(request, f"Ticket #{ticket.id} updated successfully.")
+                else:
+                    messages.error(request, "All fields are required.")
+            else:
+                messages.error(request, "You can only edit your own tickets while they are still Open.")
+            return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif action == 'delete_ticket':
+            # Employee can delete own Open tickets; Manager can delete any ticket
+            if (role == 'employee' and ticket.created_by == request.user and ticket.status == 'Open') or role == 'manager':
+                ticket_num = ticket.id
+                ticket.delete()
+                logger.info(f"Ticket deleted: Ticket #{ticket_num} deleted by {request.user.email}")
+                messages.success(request, f"Ticket #{ticket_num} has been deleted.")
+                return redirect('tickets')
+            else:
+                messages.error(request, "You can only delete your own tickets while they are still Open.")
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+    updates = ticket.updates.order_by('created_at')
+
+    # NIST Equivalent Timeline Steps
+    timeline_steps = [
+        {'label': 'Open', 'nist': 'Detection', 'status': 'done' if ticket.status != 'Open' else 'active'},
+        {'label': 'Investigating', 'nist': 'Analysis / Containment', 'status': 'done' if ticket.status in ['Resolved', 'Closed'] else ('active' if ticket.status == 'Investigating' else 'pending')},
+        {'label': 'Resolved', 'nist': 'Recovery', 'status': 'done' if ticket.status == 'Closed' else ('active' if ticket.status == 'Resolved' else 'pending')},
+        {'label': 'Closed', 'nist': 'Post-Incident Review', 'status': 'done' if ticket.status == 'Closed' else 'pending'}
+    ]
+
+    # Determine if employee can edit/delete (only own Open tickets)
+    can_edit = (role == 'employee' and ticket.created_by == request.user and ticket.status == 'Open')
+    can_delete = can_edit or role == 'manager'
+
+    context = {
+        'role': role,
+        'ticket': ticket,
+        'updates': updates,
+        'timeline_steps': timeline_steps,
+        'can_edit': can_edit,
+        'can_delete': can_delete,
+        'active_tab': 'tickets',
+    }
+    return render(request, 'helpdesk/ticket_details.html', context)
+
+@login_required
+def profile_view(request):
+    user = request.user
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'update_profile':
+            full_name = request.POST.get('full_name', '').strip()
+            email = request.POST.get('email', '').strip().lower()
+            department = request.POST.get('department', '').strip()
+
+            if not full_name or not email:
+                messages.error(request, "Name and Email are required.")
+                return redirect('profile')
+
+            # Verify email uniqueness
+            if CustomUser.objects.exclude(id=user.id).filter(email=email).exists():
+                messages.error(request, "Email already in use.")
+                return redirect('profile')
+
+            user.full_name = full_name
+            user.email = email
+            user.department = department
+            
+            new_username = email.split('@')[0]
+            if user.username != new_username:
+                base_username = new_username
+                username = new_username
+                counter = 1
+                while CustomUser.objects.exclude(id=user.id).filter(username=username).exists():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+                user.username = username
+            user.save()
+            messages.success(request, "Profile updated successfully.")
+            return redirect('profile')
+
+        elif action == 'update_avatar':
+            profile_picture = request.FILES.get('profile_picture')
+            if profile_picture:
+                ext = os.path.splitext(profile_picture.name)[1].lower()
+                if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                    user.profile_picture = profile_picture
+                    user.save()
+                    messages.success(request, "Profile picture updated successfully.")
+                else:
+                    messages.error(request, "Invalid file type. Please upload an image.")
+            return redirect('profile')
+
+        elif action == 'remove_avatar':
+            if user.profile_picture:
+                user.profile_picture.delete()
+            user.profile_picture = None
+            user.save()
+            messages.success(request, "Profile picture removed successfully.")
+            return redirect('profile')
+
+    # Fetch and paginate user activities
+    all_tickets = Ticket.objects.filter(created_by=user).order_by('-created_at')
+    all_updates = TicketUpdate.objects.filter(updated_by=user).order_by('-created_at')
+    
+    activity_list = []
+    for t in all_tickets:
+        activity_list.append({
+            'icon': 'fa-ticket text-primary',
+            'desc': f"Submitted ticket: {t.title}",
+            'date': t.created_at
+        })
+    for u in all_updates:
+        activity_list.append({
+            'icon': 'fa-comment-dots text-success',
+            'desc': f"Updated ticket #{u.ticket.id}",
+            'date': u.created_at
+        })
+    # Sort activity by date descending
+    activity_list = sorted(activity_list, key=lambda x: x['date'], reverse=True)
+
+    from django.core.paginator import Paginator
+    paginator = Paginator(activity_list, 5)  # 5 activities per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'role': user.role,
+        'page_obj': page_obj,
+        'active_tab': 'profile'
+    }
+    return render(request, 'helpdesk/profile.html', context)
+
+@login_required
+def settings_view(request):
+    user = request.user
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'change_password':
+            form = PasswordChangeForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                update_session_auth_hash(request, user)
+                messages.success(request, "Password changed successfully.")
+                
+                # Check user security notification preferences
+                if user.notify_security:
+                    logger.info(f"Security Alert: Password changed successfully for user {user.email}")
+                    send_mail(
+                        subject="Security Alert: Password Changed Successfully",
+                        message=f"Hi {user.full_name or user.username},\n\nYour account password has been successfully updated.\n\nIf you did not perform this change, please contact IT immediately.",
+                        from_email=None,
+                        recipient_list=[user.email],
+                        fail_silently=True,
+                    )
+            else:
+                messages.error(request, "Password change failed. Please review guidelines.")
+            return redirect('settings')
+        elif action == 'update_notifications':
+            notify_tickets = request.POST.get('notify_tickets') == 'true'
+            notify_security = request.POST.get('notify_security') == 'true'
+            user.notify_tickets = notify_tickets
+            user.notify_security = notify_security
+            user.save()
+            return JsonResponse({'status': 'success'})
+
+    form = PasswordChangeForm(user)
+    context = {
+        'role': user.role,
+        'form': form,
+        'active_tab': 'settings'
+    }
+    return render(request, 'helpdesk/settings.html', context)
+
+@login_required
+def generate_api_token(request):
+    from rest_framework_simplejwt.tokens import RefreshToken
+    refresh = RefreshToken.for_user(request.user)
+    return JsonResponse({
+        'status': 'success',
+        'token': str(refresh.access_token)
+    })
+
+@login_required
+def users_view(request):
+    if request.user.role != 'manager' and not request.user.is_superuser:
+        raise PermissionDenied("Access Denied")
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'add_user':
+            full_name = request.POST.get('full_name', '').strip()
+            email = request.POST.get('email', '').strip().lower()
+            role = request.POST.get('role', 'employee')
+            department = request.POST.get('department', 'IT & Systems').strip()
+            password = request.POST.get('password', '')
+
+            if not full_name or not email or not password:
+                messages.error(request, "Name, email, and password are required.")
+                return redirect('users')
+
+            if CustomUser.objects.filter(email=email).exists():
+                messages.error(request, "A user with this email already exists.")
+                return redirect('users')
+
+            username = email.split('@')[0]
+            base_username = username
+            counter = 1
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+
+            new_user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                role=role,
+                full_name=full_name,
+                department=department
+            )
+            messages.success(request, f"User {new_user.full_name} created.")
+
+        elif action == 'toggle_status':
+            target_id = request.POST.get('user_id')
+            target_user = get_object_or_404(CustomUser, id=target_id)
+            if target_user == request.user:
+                messages.error(request, "You cannot modify your own status.")
+            else:
+                target_user.is_active = not target_user.is_active
+                target_user.save()
+                state = "activated" if target_user.is_active else "deactivated"
+                messages.success(request, f"User {target_user.full_name} has been {state}.")
+
+        return redirect('users')
+
+    managers = CustomUser.objects.filter(role='manager')
+    employees = CustomUser.objects.filter(role='employee')
+    context = {
+        'role': request.user.role,
+        'managers': managers,
+        'employees': employees,
+        'active_tab': 'users',
+    }
+    return render(request, 'helpdesk/users.html', context)
+
+@login_required
+def security_logs_view(request):
+    if request.user.role != 'manager' and not request.user.is_superuser:
+        raise PermissionDenied("Access Denied")
+
+    query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', 'all')
+
+    logs = LoginAttempt.objects.all()
+
+    if query:
+        logs = logs.filter(Q(email_attempted__icontains=query) | Q(ip_address__icontains=query))
+
+    if status_filter == 'success':
+        logs = logs.filter(success=True)
+    elif status_filter == 'failed':
+        logs = logs.filter(success=False)
+
+    from django.core.paginator import Paginator
+    paginator = Paginator(logs, 10)  # 10 logs per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'role': request.user.role,
+        'page_obj': page_obj,
+        'query': query,
+        'status_filter': status_filter,
+        'active_tab': 'security_logs',
+    }
+    return render(request, 'helpdesk/security_logs.html', context)
+
+@login_required
+def solutions_detail_view(request, slug):
+    guides = {
+        'forgot-password': {
+            'title': 'Forgot Password',
+            'icon': 'fa-key text-warning',
+            'desc': 'Follow these steps to recover or reset your account password.',
+            'steps': [
+                'Ensure Caps Lock is turned off on your keyboard.',
+                'If you are still logged out, navigate to your Profile page and enter a new password in the password change form.',
+                'If you cannot log in at all, contact an IT Support Analyst at extension 4500 to request an AD credentials reset.',
+                'A temporary password will be sent to your verified mobile number or manager.'
+            ]
+        },
+        'internet-not-working': {
+            'title': 'Internet Not Working',
+            'icon': 'fa-wifi text-info',
+            'desc': 'Troubleshoot your local network or corporate VPN client.',
+            'steps': [
+                'Check if your device Wi-Fi card is enabled and connected to the corporate network.',
+                'Unplug and replug your ethernet LAN cable if connected via cable.',
+                'Disconnect and reconnect your Cisco AnyConnect VPN client if working remotely.',
+                'Try restarting your router or network adaptor to clear local caching issues.'
+            ]
+        },
+        'printer-not-working': {
+            'title': 'Printer Not Working',
+            'icon': 'fa-print text-primary',
+            'desc': 'Check printer status and clear print queues.',
+            'steps': [
+                'Verify the printer power indicator is green and the screen displays no error codes.',
+                'Open paper trays to inspect for physical paper jams or out-of-paper conditions.',
+                'Open Windows Settings -> Devices -> Printers & Scanners, and verify the correct corporate network printer is selected.',
+                'Restart the Windows Print Spooler service to clear stuck print queues.'
+            ]
+        },
+        'email-access-issue': {
+            'title': 'Email Access Issue',
+            'icon': 'fa-envelope-open-text text-success',
+            'desc': 'Resolve mail delivery delay or sync disconnects.',
+            'steps': [
+                'Check your junk email folder to verify if messages were misclassified by spam filters.',
+                'In Outlook, verify that the bottom-right status bar displays "Connected" and not "Working Offline".',
+                'Verify that your corporate mailbox quota limit has not been exceeded.',
+                'Run a manual Send/Receive action using the Outlook ribbon button.'
+            ]
+        }
+    }
+    
+    guide = guides.get(slug)
+    if not guide:
+        return redirect('dashboard')
+        
+    return render(request, 'helpdesk/solutions_detail.html', {'guide': guide, 'active_tab': 'dashboard'})
+
+
+@login_required
+@ratelimit(key='ip', rate='5/m', method='POST', block=False)
+def submit_ticket(request):
+    if getattr(request, 'limited', False):
+        return HttpResponse("Too many requests. Please wait before submitting again.", status=429)
+
+    if request.method == 'POST':
+        form = TicketSubmissionForm(request.POST, request.FILES)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.created_by = request.user
+            ticket.nist_stage = 'detection'
+            ticket.save()
+
+            # Create TicketLog entry
+            TicketLog.objects.create(
+                ticket=ticket,
+                changed_by=request.user,
+                change_description="Ticket submitted and initial NIST stage set to detection."
+            )
+
+            # Log using Python logging module (ticket_audit)
+            audit_logger.info("", extra={
+                'user': request.user.email,
+                'action': 'CREATE',
+                'id': ticket.id,
+                'detail': f"Ticket created via web form. Type: {ticket.ticket_type}, Priority: {ticket.priority}"
+            })
+
+            messages.success(request, "Ticket submitted successfully!")
+            return redirect('ticket_list')
+    else:
+        form = TicketSubmissionForm()
+
+    return render(request, 'helpdesk/ticket_form.html', {'form': form})
+
+
+@login_required
+def update_ticket_stage(request, ticket_id):
+    if request.method == 'POST':
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        new_stage = request.POST.get('nist_stage')
+        if new_stage in ['preparation', 'detection', 'containment', 'recovery', 'closed']:
+            old_stage = ticket.nist_stage
+            ticket.nist_stage = new_stage
+            ticket.save()
+
+            # Create TicketLog entry
+            TicketLog.objects.create(
+                ticket=ticket,
+                changed_by=request.user,
+                change_description=f"NIST stage updated from {old_stage} to {new_stage}."
+            )
+
+            # Log every update using Python logging
+            audit_logger.info("", extra={
+                'user': request.user.email,
+                'action': 'UPDATE_STAGE',
+                'id': ticket.id,
+                'detail': f"Changed stage from {old_stage} to {new_stage}"
+            })
+
+            messages.success(request, f"Ticket stage updated to {new_stage.capitalize()}.")
+        else:
+            messages.error(request, "Invalid NIST stage.")
+
+    return redirect('ticket_list')
+
+
+@login_required
+def ticket_list(request):
+    tickets = Ticket.objects.filter(assigned_to=request.user)
+
+    nist_stage = request.GET.get('nist_stage')
+    is_resolved = request.GET.get('is_resolved')
+
+    if nist_stage:
+        tickets = tickets.filter(nist_stage=nist_stage)
+
+    if is_resolved is not None and is_resolved != '':
+        if is_resolved.lower() in ['true', '1', 'yes']:
+            tickets = tickets.filter(is_resolved=True)
+        elif is_resolved.lower() in ['false', '0', 'no']:
+            tickets = tickets.filter(is_resolved=False)
+
+    context = {
+        'tickets': tickets,
+        'nist_stage_filter': nist_stage,
+        'is_resolved_filter': is_resolved,
+    }
+    return render(request, 'helpdesk/ticket_list.html', context)
+

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — IT Helpdesk & Incident Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 50%, #0A3D91 0%, #030712 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem 1rem;
+        }
+
+        /* ── Floating Glow Blobs ── */
+        .blob {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            background: linear-gradient(135deg, rgba(16, 167, 227, 0.22) 0%, rgba(10, 61, 145, 0.22) 100%);
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: 1;
+            animation: float 22s infinite alternate ease-in-out;
+        }
+        .blob-1 {
+            top: -5%;
+            left: 10%;
+        }
+        .blob-2 {
+            bottom: -5%;
+            right: 10%;
+            animation-delay: -11s;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) scale(1) rotate(0deg); }
+            100% { transform: translateY(50px) scale(1.15) rotate(45deg); }
+        }
+
+        /* ── Glassmorphism Login Card ── */
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            animation: scaleUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        @keyframes scaleUp {
+            from { opacity: 0; transform: scale(0.96) translateY(12px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .brand {
+            font-size: 1.95rem;
+            font-weight: 800;
+            color: #0A3D91;
+            text-align: center;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .brand i {
+            color: #f59e0b;
+            animation: bounceSlow 3s infinite ease-in-out;
+        }
+        @keyframes bounceSlow {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* ── Custom Field Focus Styles ── */
+        .input-group {
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.22s ease;
+            background: #f8fafc;
+        }
+        .input-group-text {
+            background-color: transparent !important;
+            border: none !important;
+            color: #64748b;
+            font-size: 0.95rem;
+            padding-left: 1.1rem;
+            padding-right: 0.6rem;
+        }
+        .form-control {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            padding: 0.78rem 1rem 0.78rem 0.5rem;
+            font-size: 0.92rem;
+            color: #1e293b;
+        }
+        .input-group:focus-within {
+            border-color: #0A3D91;
+            box-shadow: 0 0 0 4px rgba(10, 61, 145, 0.12);
+            background: #ffffff;
+        }
+        .input-group:focus-within .input-group-text {
+            color: #0A3D91;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 0.72rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* ── Register Button ── */
+        .btn-login {
+            background: linear-gradient(135deg, #0A3D91 0%, #1e5bb8 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            width: 100%;
+            transition: all 0.22s ease;
+            box-shadow: 0 4px 12px rgba(10, 61, 145, 0.22);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(10, 61, 145, 0.3);
+            background: linear-gradient(135deg, #072d6d 0%, #0A3D91 100%);
+        }
+        .btn-login:active {
+            transform: translateY(1px);
+        }
+
+        .text-navy {
+            color: #0A3D91;
+        }
+        .text-navy:hover {
+            color: #f59e0b;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating background mesh blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <div class="login-box">
+        <div class="brand">
+            <i class="fa-solid fa-headset"></i>HelpDesk<span>Pro</span>
+        </div>
+        <p class="text-center text-muted mb-4 small fw-semibold">IT Support & Incident Tracker</p>
+
+        {% if messages %}
+            <div class="alert alert-danger p-2 small text-center rounded-3 border-0 bg-danger-subtle text-danger mb-4 fw-semibold" role="alert">
+                {% for message in messages %}
+                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ message }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form id="loginForm" method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="loginEmail">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-regular fa-envelope"></i></span>
+                    <input type="email" class="form-control" id="loginEmail" name="email" placeholder="name@company.com" required autocomplete="email">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="loginPassword">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" class="form-control" id="loginPassword" name="password" placeholder="••••••••" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login" id="btnLoginSubmit">
+                <i class="fa-solid fa-right-to-bracket"></i>Sign In
+            </button>
+        </form>
+
+        <hr class="my-4" style="border-color: #e2e8f0;">
+        <p class="text-center text-muted mb-0" style="font-size:0.85rem;">
+            Don't have an account? <a href="{% url 'register' %}" class="fw-bold text-navy text-decoration-none">Create Account</a>
+        </p>
+    </div>
+</body>
+</html>
