@@ -206,8 +206,10 @@ SIMPLE_JWT = {
 
 # Axes Security Settings
 AXES_FAILURE_LIMIT = 5
-AXES_COOLOFF_TIME = 1
+AXES_COOLOFF_TIME = timedelta(minutes=5)
 AXES_LOCKOUT_TEMPLATE = 'helpdesk/access_denied.html'
+AXES_LOCKOUT_PARAMETERS = [["ip_address", "username"]]
+AXES_CLIENT_IP_CALLABLE = 'helpdesk.utils.get_client_ip'
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True

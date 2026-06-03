@@ -13,6 +13,7 @@ from django_ratelimit.decorators import ratelimit
 
 from .models import CustomUser, Ticket, TicketUpdate, LoginAttempt, TicketLog
 from .forms import TicketSubmissionForm
+from .utils import get_client_ip
 
 audit_logger = logging.getLogger('ticket_audit')
 
@@ -89,11 +90,7 @@ def login_view(request):
         password = request.POST.get('password', '')
         
         # Get client IP address
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip_address = x_forwarded_for.split(',')[0].strip()
-        else:
-            ip_address = request.META.get('REMOTE_ADDR')
+        ip_address = get_client_ip(request)
             
         try:
             user_obj = CustomUser.objects.get(email=email)
