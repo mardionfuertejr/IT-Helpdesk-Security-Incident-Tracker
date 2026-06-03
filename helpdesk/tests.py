@@ -514,6 +514,7 @@ class SettingsPageTests(TestCase):
 
 from helpdesk.models import TicketLog
 from helpdesk.forms import TicketSubmissionForm
+from setup_data import seed_data
 
 @override_settings(AXES_ENABLED=False)
 class NISTIncidentTrackerTests(TestCase):
@@ -683,5 +684,22 @@ class NISTIncidentTrackerTests(TestCase):
         })
         self.assertEqual(res_post_fail.status_code, 400)
 
+
+@override_settings(AXES_ENABLED=False)
+class SeedDataTests(TestCase):
+    def test_seed_data_does_not_reset_existing_user_passwords(self):
+        manager = CustomUser.objects.create_user(
+            username='manager',
+            email='manager@company.com',
+            password='CustomPassword123!',
+            role='manager',
+            full_name='Alice Johnson'
+        )
+
+        seed_data()
+
+        manager.refresh_from_db()
+        self.assertTrue(manager.check_password('CustomPassword123!'))
+        self.assertFalse(manager.check_password('password123'))
 
 

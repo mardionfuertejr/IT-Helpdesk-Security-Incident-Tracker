@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 import sys
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 import dj_database_url
 
@@ -105,6 +106,8 @@ if database_url:
         )
     }
 else:
+    if os.getenv('RENDER') and not TESTING:
+        raise ImproperlyConfigured("DATABASE_URL must be set when deploying on Render.")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

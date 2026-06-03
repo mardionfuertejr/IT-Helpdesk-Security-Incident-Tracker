@@ -46,7 +46,7 @@ def seed_data():
                 'department': ud['department']
             }
         )
-        if created or not user.check_password(ud['password']):
+        if created:
             user.set_password(ud['password'])
             user.is_active = True
             user.save()
