@@ -180,11 +180,16 @@
         <p class="text-center text-muted mb-4 small fw-semibold">Create a new Employee Account</p>
 
         {% if messages %}
-            <div class="alert alert-danger p-2 small text-center rounded-3 border-0 bg-danger-subtle text-danger mb-4 fw-semibold" role="alert">
-                {% for message in messages %}
-                    <i class="fa-solid fa-circle-exclamation me-2"></i>{{ message }}
-                {% endfor %}
-            </div>
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'success' %}alert-success bg-success-subtle text-success{% else %}alert-danger bg-danger-subtle text-danger{% endif %} p-2 small text-center rounded-3 border-0 mb-4 fw-semibold" role="alert">
+                    {% if message.tags == 'success' %}
+                        <i class="fa-solid fa-circle-check me-2"></i>
+                    {% else %}
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
 
         <form method="POST" action="{% url 'register' %}" enctype="multipart/form-data">

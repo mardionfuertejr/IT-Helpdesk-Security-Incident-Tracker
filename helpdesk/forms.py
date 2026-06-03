@@ -15,5 +15,4 @@ class TicketSubmissionForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        self.instance.full_clean() # Trigger model clean()
         return cleaned_data

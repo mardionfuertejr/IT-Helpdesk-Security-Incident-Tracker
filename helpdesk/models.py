@@ -85,7 +85,7 @@ class Ticket(models.Model):
         if self.is_resolved and self.nist_stage != 'closed':
             raise ValidationError("Resolved tickets must be Closed.")
         if self.ticket_type == 'Security Incident' and self.priority == 'Low':
-            raise ValidationError("Security tickets cant be Low priority.")
+            raise ValidationError({'priority': "Security tickets cant be Low priority."})
 
     @property
     def attachment_filename(self):
