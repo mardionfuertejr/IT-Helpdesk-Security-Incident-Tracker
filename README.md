@@ -172,3 +172,5 @@ python manage.py test
 ## 10. Recent UI/UX & Mobile Responsiveness Improvements
 *   **Overlap Resolution**: Removed conflicting Bootstrap classes from the sidebar brand container. This lets the custom CSS top-padding of `85px` take effect on mobile screens, successfully shifting the "IT Helpdesk" logo below the floating hamburger close button (`menu-toggle`) to prevent overlaps.
 *   **Recent Activity Polish**: Redesigned the activity list under [profile.html](file:///c:/Users/Dion/Desktop/IT%20Helpdesk%20&%20Security%20Incident%20Tracker/helpdesk/templates/helpdesk/profile.html) to dynamically stack into a vertical column on extra small screens and realign dates smoothly, ensuring readability on all mobile phone viewports.
+
+# helpdesk-web
