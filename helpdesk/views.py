@@ -13,6 +13,7 @@ from django_ratelimit.decorators import ratelimit
 
 from .models import CustomUser, Ticket, TicketUpdate, LoginAttempt, TicketLog
 from .forms import TicketSubmissionForm
+from .validators import validate_file_size, validate_file_type
 from .utils import get_client_ip
 
 audit_logger = logging.getLogger('ticket_audit')
@@ -242,6 +243,14 @@ def ticket_create_view(request):
             messages.error(request, "Please enter all required fields.")
             return redirect('create_ticket')
 
+        if attachment:
+            try:
+                validate_file_type(attachment)
+                validate_file_size(attachment)
+            except Exception as exc:
+                messages.error(request, str(exc))
+                return redirect('create_ticket')
+
         ticket = Ticket.objects.create(
             created_by=request.user,
             title=title,
@@ -335,6 +344,14 @@ def ticket_detail_view(request, ticket_id):
                 attachment = request.FILES.get('attachment')
 
                 if title and category and priority and description:
+                    if attachment:
+                        try:
+                            validate_file_type(attachment)
+                            validate_file_size(attachment)
+                        except Exception as exc:
+                            messages.error(request, str(exc))
+                            return redirect('ticket_detail', ticket_id=ticket.id)
+
                     ticket.title = title
                     ticket.category = category
                     ticket.priority = priority
@@ -462,6 +479,12 @@ def profile_view(request):
             if profile_picture:
                 ext = os.path.splitext(profile_picture.name)[1].lower()
                 if ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+                    try:
+                        validate_file_size(profile_picture)
+                    except Exception as exc:
+                        messages.error(request, str(exc))
+                        return redirect('profile')
+
                     old_picture_name = user.profile_picture.name if user.profile_picture else "None"
                     user.profile_picture = profile_picture
                     user.save()
@@ -813,6 +836,10 @@ def update_ticket_stage(request, ticket_id):
     try:
         if request.method == 'POST':
             ticket = get_object_or_404(Ticket, id=ticket_id)
+            role = 'manager' if request.user.is_superuser else request.user.role
+            if role != 'manager' and ticket.assigned_to_id != request.user.id:
+                raise PermissionDenied("Only managers or assigned users can update this ticket.")
+
             new_stage = request.POST.get('nist_stage')
             if new_stage in ['preparation', 'detection', 'containment', 'recovery', 'closed']:
                 old_stage = ticket.nist_stage
@@ -882,4 +909,3 @@ def page_not_found(request, exception):
 
 def server_error(request):
     return render(request, 'errors/500.html', status=500)
-

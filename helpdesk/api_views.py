@@ -34,7 +34,10 @@ class APITicketListView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        tickets = Ticket.objects.all()
+        if request.user.role == 'manager' or request.user.is_superuser:
+            tickets = Ticket.objects.all()
+        else:
+            tickets = Ticket.objects.filter(created_by=request.user)
         serializer = TicketSerializer(tickets, many=True)
         return Response(serializer.data)
 
